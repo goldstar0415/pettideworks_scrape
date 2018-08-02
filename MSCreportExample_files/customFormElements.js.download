@@ -1,0 +1,91 @@
+//<script type="text/javascript">
+
+function initCheckBox(iconType){
+    $(".checkBox").click(function(e){
+        e.preventDefault();
+        var isDisabled = $("input:checkbox", this).prop("disabled");
+
+        if(isDisabled){
+            return false;
+        }else{
+            var isChecked = $("input:checkbox", this).prop("checked");
+            $(this).toggleClass("checkBox-off");
+            $(this).toggleClass("checkBox-on-" + iconType);
+
+            if(isChecked){
+                $("input:checkbox", this).prop("checked", false);
+            }else{
+                $("input:checkbox", this).prop("checked", true);
+            }
+            $("#submitForm").prop("disabled", false);
+        }
+    });
+
+    var items = $(".checkBox input:checkbox");
+    for(var i = 0; i < items.length; i++){
+        var item = items[i];
+        if(item.checked){
+            $(item).parent().addClass("checkBox-on-" + iconType);
+            $(item).parent().removeClass("checkBox-off");
+        }else{
+            $(item).parent().addClass("checkBox-off");
+            $(item).parent().removeClass("checkBox-on-" + iconType);
+        }
+
+        if(item.disabled){
+            $(item).parent().addClass("checkBox-disabled");
+        }
+    }
+}
+
+/* 
+    example
+    Wrapper for Radio Box Group
+    
+    $().ready(function () {
+        initRadioBoxGroup($("#parent"), function(){
+            do something else, when clicking on the div ...
+        });
+    });
+    
+    <div id="parent">
+        <div class="radioBox">
+            <label>...<label>
+            <input type="radio" value="..." id="...">
+        </div>
+        
+        <div class="radioBox">
+            ...
+        </div>
+    </div>
+*/
+function initRadioBoxGroup(parent){
+    $(".radioBox", parent).click(function(){
+        $(".radioBox-on input:radio", parent).prop("checked", false);
+        $(".radioBox-on", parent).removeClass("radioBox-on");
+
+        $("input:radio", this).prop("checked", true);
+        $(this).addClass("radioBox-on");
+
+        //if(callback) callback.call();
+    });
+
+    $(".radioBox input:radio:checked", parent).click();
+};
+
+function initValidationForNumber(items, message){
+    if(!items || items.length < 1) return;
+//    if(!alertDiv) alertDiv=$("#alert");
+    for(var i = 0; i < items.length; i++){
+        var item = items[i];
+        $(item).blur(function(){
+            if (isNaN(this.value) && this.value != ""){
+                setTimeout('$("#'+this.id+'").focus();',25);
+                twitterAlertMessage(message);
+                return false;
+            }
+        });
+    }
+    return true;
+}
+//</script>

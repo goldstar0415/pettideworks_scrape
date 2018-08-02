@@ -1,0 +1,16 @@
+.menubar, #footer, .exportlinks, .pagingDivWrapper, .btn-group {
+    display: none;
+}
+.margin { 
+    margin: 0px; 
+}
+
+div.main { 
+    padding: 0px;
+}
+
+@media print {
+  a[href]:after {
+    content: "";
+  }
+}

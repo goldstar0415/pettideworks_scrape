@@ -1,0 +1,45 @@
+/**
+ * Service object to support push messaging from the Firebasee Cloud Messaging 
+ * service.
+ */
+var messagingService = {
+
+    messaging: null,
+
+    init: function () {
+
+        //load the service worker and request messaging permission.
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('fc-sw.js').then(function (registration) {
+                // Registration was successful
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+
+            }, function (err) {
+                // registration failed :(
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        }
+
+    },
+    
+    receive: function() {
+        firebase.initializeApp({
+            messagingSenderId: "338712420954"
+        });
+
+        this.messaging = firebase.messaging();
+
+        this.messaging.onMessage(function(payload) {
+            console.log(JSON.stringify(payload));
+//            alert("Message received. ", JSON.stringify(payload));
+            swal(payload.notification.title, payload.notification.body);
+        });
+    }
+};
+
+
+/**
+ * This block is intended to be top-level code that auto-runs on each page load.
+ */
+    
+    messagingService.receive();

@@ -1,0 +1,54 @@
+
+function goToPage(pageNumber) {
+    document.paging.intpage.value = pageNumber;
+    document.paging.submit();
+}
+
+function enableNotes(chkbx, noteField) {
+    if (noteField) {
+        var parts = noteField.split("|");
+        var notification = parts[0];
+        var type = parts[1];
+        if (type === "email") {
+            if (chkbx.checked) {
+                document.getElementById((notification + "_NOTE").toUpperCase()).disabled = false;
+                document.getElementById((notification + "_NOTE").toUpperCase()).style.backgroundColor = "#FFFFFF";
+                document.getElementById((notification + "_NOTE").toUpperCase()).value = "";
+            } else {
+                document.getElementById((notification + "_NOTE").toUpperCase()).disabled = true;
+                document.getElementById((notification + "_NOTE").toUpperCase()).style.backgroundColor = "#EEEEEE";
+                document.getElementById((notification + "_NOTE").toUpperCase()).value = "";
+            }
+        }
+    }
+}
+
+function trim(strValue) {
+    if (strValue !== null && strValue.length > 0) {
+        return strValue.replace(/^\s+|\s+$/g, "");
+    }
+
+    return strValue;
+}
+
+function hasData(value) {
+    return value && trim(value).length > 0;
+}
+    
+/**
+ * Validates that a specified date matches the pattern the user has speciied
+ * in Forecast preferences.
+
+ * @param {string} dateTime (required) String representation of a date and/or time
+ * @param {string} momentPattern (required) A Moment.js date pattern to be used for validation.
+ * @returns {boolean} true if date conforms to pattern; false otherwise (or if 
+ *   a parameter is unspecified).
+ */
+function isValidDateTimePattern(dateTime, momentPattern) {
+
+    if (hasData(dateTime) && hasData(momentPattern)) {
+        return (new moment(dateTime, momentPattern, true).isValid());
+    }
+
+    return false;
+}

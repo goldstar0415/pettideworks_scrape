@@ -1,0 +1,296 @@
+/**
+ *
+ * @param ctx - application context
+ * @param containerElement - DOM(HTML) element to add the table
+ * @param messages - localization messages
+ * @param headers - titles of the columns ["columnHeader 1", ....]}
+ * @constructor
+ */
+DataTableHelper = function(context, containerElement, messages, headers){
+    var showMsg = "Show"//TODO: add object with localization messages
+//    var context = ctx;
+//    var container = containerElement;
+    var template = {
+        "sDom": "<'row'<'col-xs-6'l><'col-xs-6'f>r>t<'row'<'col-xs-6'T><'col-xs-6'p>>",
+        "sPaginationType": "bootstrap",
+        "oLanguage": {
+            "sLengthMenu": messages.show + " _MENU_"
+        },
+        "oTableTools": {
+            "sSwfPath": context + "/media/swf/copy_csv_xls_pdf.swf",
+            "aButtons": [
+                "copy",
+                "print",
+                "csv", "xls", "pdf"
+            ]
+        }
+     };
+
+    /**
+     * Server has to return object with '{"aaData":[["bla", "blah", "bla"],...]}'
+     * See http://datatables.net/examples/data_sources/ajax.html.
+     * @param url
+     */
+    this.fillFromUrl = function (url) {
+        template["bProcessing"] =  true;
+        template["sAjaxSource"] = url;
+        $('#' + this.getId()).dataTable(template);
+    }
+
+    /**
+     *
+     * @param array of  arrays (raw values)
+     */
+    this.fillFromArrayOfArray = function (array) {
+        template["aaData"] = array;
+        $('#' + this.getId()).dataTable(template);
+    }
+
+    this.createSkeleton(containerElement, headers);
+}
+
+/**
+ * Create and append to 'container' table with column 'headers' passed to the method.
+ *
+ * <table class="table table-striped table-bordered" id="searchTable-0">
+ *  <thead>
+ *      <tr>
+ *          <th>header[0]</th>
+ *          ....
+ *          <th>headers[i]</th>
+ *      </tr>
+ *  </thead>
+ *  <tbody><tr><td></td></tr></tbody>
+ *</table>
+ *
+ * @param container - element to append the table.
+ * @param headers - header names
+ * @return Table html element.
+ **/
+DataTableHelper.prototype.createSkeleton = function(container, headers){
+
+    var idCount = 0;
+    var idTmpl = "searchTable-"
+    //if table already exists increase id value.
+    while($("#"+idTmpl+idCount).length) {
+        idCount++;
+    }
+
+    this.setId(idTmpl+idCount);
+
+    var $table = $("<table/>").addClass("table table-striped table-bordered").attr("id", this.getId());
+    var $thead = $("<thead/>").appendTo($table);
+    var $tr = $("<tr/>").appendTo($thead);
+
+    for (var i = 0; i < headers.length; i++) {
+        var label = headers[i];
+        $("<td/>").text(label).appendTo($tr);
+    }
+    //stub
+    $table.append("<tbody><tr><td></td></tr></tbody>");
+
+    $(container).append($table);
+
+    return $table[0];
+}
+
+/**
+ *
+ * Converts array of objects to array of arrays (2-dim array of raw values) and fill the table with the values.
+ * Get the value from entity by: entity[mapper[i]].
+ * Or if formatter exists for mapper[i] it gets result of execution: formatter[mapper[i]]();
+ * @param array - array of objects [{name: "John", age: 12}, {...}]
+ * @param mapper - array of strings, to determine the order of columns ["fieldName", "filedName2", ...]
+ * @param formatter - object: key- fieldName, value - function. For example: {"fieldName": function(entity){return '<a href="">'+entity.getName()+'</a>'}, "filedName2": function(){ return this.getName2()}};
+ * @return Array  - of arrays.
+ */
+
+DataTableHelper.prototype.fillFromArrayOfObject = function (array, mapper, formatter) {
+    var result = [];
+    if (array && array.length) {
+        for (var i=0; i < array.length; i++) {
+            var entity = array[i];
+
+            var entityToArray = [];
+            for (var j = 0; j < mapper.length; j++) {
+                var fieldName = mapper[j];
+                var value;
+                if (fieldName in formatter) {
+                    value = formatter[fieldName].call(entity, entity);
+                } else {
+                    value = entity[fieldName];
+                }
+                entityToArray.push(value);
+            }
+            result.push(entityToArray);
+        }
+    }
+    this.fillFromArrayOfArray(result);
+    return result;
+}
+
+DataTableHelper.prototype.getId = function() {
+    return this.id;
+}
+
+DataTableHelper.prototype.setId = function(id) {
+    this.id = id;
+}
+
+
+/**
+ * Convert array of object to 2-dim array of raw data.
+ * @param users - array of SearchUserBean objects (JSON)
+ */
+    function convertToDataArray(users) {
+    var data = [];
+    if (users) {
+        for(var i=0; i < users.length; i++) {
+            var u = users[i];
+            var companyName = u.companyName;
+            if (u.companyId) {
+                if(companyName) {
+                    companyName += " (" + u.companyId +")";
+                } else {
+                    companyName = u.companyId;
+                }
+            }
+            var innerData = [
+                "<a href=\"${pageContext.request.contextPath}/admin/default.do?method=user&wtrUserGkey=" + u.id + "&companyType="+u.companyType+"&companyId="+u.companyId+"\" class=\"normal nw\">"+u.name+"</a>",
+                u.email,u.companyTypeDB, u.userType,
+                "<a href=\"${pageContext.request.contextPath}/admin/default.do?method=company&companyType="+u.companyType+"&companyId="+u.companyId+"\" class=\"normal\">"+companyName+"</a>"
+            ];
+            data.push(innerData);
+        }
+    }
+    return data;
+}
+
+/*Init default properties*/
+(function() {
+    /* Default class modification */
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper form-inline"
+    });
+
+
+    /* API method to get paging information */
+    $.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings ){
+        return {
+            "iStart": oSettings._iDisplayStart,
+            "iEnd": oSettings.fnDisplayEnd(),
+            "iLength": oSettings._iDisplayLength,
+            "iTotal": oSettings.fnRecordsTotal(),
+            "iFilteredTotal": oSettings.fnRecordsDisplay(),
+            "iPage": oSettings._iDisplayLength === -1 ?
+                0 : Math.ceil( oSettings._iDisplayStart / oSettings._iDisplayLength ),
+            "iTotalPages": oSettings._iDisplayLength === -1 ?
+                0 : Math.ceil( oSettings.fnRecordsDisplay() / oSettings._iDisplayLength )
+        };
+    };
+
+
+    /* Bootstrap style pagination control */
+    $.extend( $.fn.dataTableExt.oPagination, {
+        "bootstrap": {
+            "fnInit": function( oSettings, nPaging, fnDraw ) {
+                var oLang = oSettings.oLanguage.oPaginate;
+                var fnClickHandler = function ( e ) {
+                    e.preventDefault();
+                    if ( oSettings.oApi._fnPageChange(oSettings, e.data.action) ) {
+                        fnDraw( oSettings );
+                    }
+                };
+
+                $(nPaging).addClass("pagination").append(
+                    '<li class="prev disabled"><a href="#">&larr; '+oLang.sPrevious+'</a></li>'+
+                        '<li class="next disabled"><a href="#">'+oLang.sNext+' &rarr; </a></li>'
+                );
+                var els = $('a', nPaging);
+                $(els[0]).bind( 'click.DT', { action: "previous" }, fnClickHandler );
+                $(els[1]).bind( 'click.DT', { action: "next" }, fnClickHandler );
+            },
+
+            "fnUpdate": function ( oSettings, fnDraw ) {
+                var iListLength = 5;
+                var oPaging = oSettings.oInstance.fnPagingInfo();
+                var an = oSettings.aanFeatures.p;
+                var i, ien, j, sClass, iStart, iEnd, iHalf=Math.floor(iListLength/2);
+
+                if ( oPaging.iTotalPages < iListLength) {
+                    iStart = 1;
+                    iEnd = oPaging.iTotalPages;
+                }
+                else if ( oPaging.iPage <= iHalf ) {
+                    iStart = 1;
+                    iEnd = iListLength;
+                } else if ( oPaging.iPage >= (oPaging.iTotalPages-iHalf) ) {
+                    iStart = oPaging.iTotalPages - iListLength + 1;
+                    iEnd = oPaging.iTotalPages;
+                } else {
+                    iStart = oPaging.iPage - iHalf + 1;
+                    iEnd = iStart + iListLength - 1;
+                }
+
+                for ( i=0, ien=an.length ; i<ien ; i++ ) {
+                    // Remove the middle elements
+                    $('li:gt(0)', an[i]).filter(':not(:last)').remove();
+
+                    // Add the new list items and their event handlers
+                    for ( j=iStart ; j<=iEnd ; j++ ) {
+                        sClass = (j==oPaging.iPage+1) ? 'class="active"' : '';
+                        $('<li '+sClass+'><a href="#">'+j+'</a></li>')
+                            .insertBefore( $('li:last', an[i])[0] )
+                            .bind('click', function (e) {
+                                e.preventDefault();
+                                oSettings._iDisplayStart = (parseInt($('a', this).text(),10)-1) * oPaging.iLength;
+                                fnDraw( oSettings );
+                            } );
+                    }
+
+                    // Add / remove disabled classes from the static elements
+                    if ( oPaging.iPage === 0 ) {
+                        $('li:first', an[i]).addClass('disabled');
+                    } else {
+                        $('li:first', an[i]).removeClass('disabled');
+                    }
+
+                    if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0 ) {
+                        $('li:last', an[i]).addClass('disabled');
+                    } else {
+                        $('li:last', an[i]).removeClass('disabled');
+                    }
+                }
+            }
+        }
+    } );
+
+    /*
+     * TableTools Bootstrap compatibility
+     * Required TableTools 2.1+
+     */
+    if ($.fn.DataTable.TableTools ) {
+        // Set the classes that TableTools uses to something suitable for Bootstrap
+        $.extend( true, $.fn.DataTable.TableTools.classes, {
+            "container": "DTTT btn-group",
+            "buttons": {
+                "normal": "btn btn-default btn-sm",
+                "disabled": "disabled"
+            },
+
+            "print": {
+                "info": "DTTT_print_info"
+            }
+        });
+
+        // Have the collection use a bootstrap compatible dropdown
+        $.extend( true, $.fn.DataTable.TableTools.DEFAULTS.oTags, {
+            "collection": {
+                "container": "ul",
+                "button": "li",
+                "liner": "a"
+            }
+        });
+    }
+})()
+

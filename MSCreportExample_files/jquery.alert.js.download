@@ -1,0 +1,58 @@
+/*
+############################################################
+# Bits 'n Tuts Twitter Alert jQuery Plugin.		   #
+# Developed by Dave Earley.				   #
+# www.BitsnTuts.com					   #
+# October 2010						   #
+# Please Leave This Message Intact			   #
+############################################################
+*/
+
+
+$.fn.twitter_alert = function (options, callback) {
+        var defaults = {
+                bg_colour: '#FFFFFF',
+                border_colour: '#6CF',
+                text_colour: '#6CF',
+                text_size: '24px',
+                text_font: 'Arial, Helvetica, sans-serif',
+                font_weight: 'normal',
+                message: this.html(),
+                fadeout_time: 3000,
+                override_css: false,
+                height: '50px',
+                position: 'fixed'
+        };
+        var settings = $.extend({}, defaults, options);
+        return this.each(function () {
+                $(this).hide();
+                var cssObj = {
+                        'font-family': 'Arial, Helvetica, sans-serif',
+                        'font-size': settings.text_size,
+                        'font-weight': settings.font_weight,
+                        'color': settings.text_colour,
+                        'background-color': settings.bg_colour,
+                        'padding': '10px',
+                        'height': '5em',
+                        'border-bottom-width': 'thin',
+                        'border-bottom-style': 'solid',
+                        'border-bottom-color': settings.border_colour,
+                        'position': settings.position,
+                        'z-index': '99999',
+                        'left': '0px',
+                        'top': '0em',
+                        'right': '0px',
+                        'filter': 'alpha(opacity=100)',
+                        '-moz-opacity': '1',
+                        'opacity': '1',
+                        'line-height': settings.height,
+                        'text-align': 'center'
+                }
+                if (settings.override_css == false) {
+                        $(this).css(cssObj);
+                }
+                $(this).html(settings.message);
+                $(this).fadeIn().delay(settings.fadeout_time);
+                $(this).fadeOut();
+        });
+};

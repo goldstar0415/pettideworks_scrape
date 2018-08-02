@@ -1,0 +1,64 @@
+/* 
+ * Service to manage operations related to equipment.
+ */
+
+var eqptService = {
+    
+    /**
+     * Evaluates trucker cutoff in the context of full delivery. This function 
+     * does not return a value; it will simply push a message to a specified DOM
+     * element if necessary.
+     * 
+     * @param {type} lineTruckerId Line trucker id.
+     * @param {type} lineCutoff Line cutoff code.
+     * @param {type} termCutoff Terminal cutoff code.
+     * @param {type} msgTarget DOM element that will receive any warning messages.
+     */
+    evalFullDelTruckerCutoff: function(lineTruckerId, lineCutoff, termCutoff, msgTarget) {
+        
+        var msg = "";
+        
+        $(msgTarget).empty();
+        $(msgTarget).hide();
+        
+        if (termCutoff || lineCutoff) {
+            if (termCutoff) {
+                msg += lineTruckerId + " " + (termCutoff === "P" ? "has been cut off from PICKUP by the terminal." : "has been cut off from ALL activities by the terminal.") + "<br/>";
+            }
+            
+            if (lineCutoff) {
+                msg += lineTruckerId + " " + (lineCutoff === "P" ? "has been cut off from PICKUP by the line." : "has been cut off from ALL activities by the line.") + "<br>";
+            }
+        }
+        
+        if (msg) {
+            $(msgTarget).html(msg);
+            $(msgTarget).show();
+        }
+
+    },
+
+    /**
+     * Updates full delivery settings. This method invokes an AJAX call to
+     * the server.
+     * 
+     * @param {type} data String representing all form field selections as a serilaized string.
+     * @returns {Object} A Promise associated with the remoting operation.
+     */
+    fullDeliveryUpdate: function(data) {
+        return $.post('default.do?method=fullDeliveryUpdate', data, 'json');
+    },
+    
+    /**
+     * Adds an equipment constraint. This method invokes an AJAX call to
+     * the server.
+     * 
+     * @param {type} data String representing all form field selections as a serilaized string.
+     * @returns {Object} Promise associated with the remoting operation.
+     */
+    addConstraint: function(data) {
+        return $.post('default.do?method=constraintAdd', data, 'json');
+    }
+    
+};
+
